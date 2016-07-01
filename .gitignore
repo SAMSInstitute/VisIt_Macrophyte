@@ -1,0 +1,8 @@
+# compile folder
+_pycache_/
+
+# compiled python files
+*.pyc
+
+# IBAMR data
+MacrophyteData/
