@@ -1,0 +1,19 @@
+TODO:
+
+Effect of Re:
+Run Re = 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50
+    at tower height 10/64, 1 cylinder.
+    (done and parsed)
+    
+Effect of number of towers:
+Run for 1, 4, 16 towers at Re = 0.1, 1, 10
+    at height 10/64
+    (16 data to be grabbed, 16 Re 1 and 0.1 to be parsed)
+    
+Effect of height:
+Run for heights 10,20,30,40(/64) at Re = 0.1, 1, 10
+    for 1 and 4 cylinders.
+    (only 4 cyl, Re 0.1 left to do and parse)
+    
+NAMING CONVENTION:
+viz_IB3d_{}tower_Re{}_len{} (num of towers, Re, tower height)
