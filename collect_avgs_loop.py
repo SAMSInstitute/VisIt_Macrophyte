@@ -4,6 +4,7 @@
 
 from __future__ import division # make float division the default
 import sys
+import os.path
 ############# Edit with proper VisIt path!!! #############
 sys.path.append("C:\Program Files\LLNL\VisIt 2.10.2\lib\site-packages")
 #############
@@ -21,12 +22,13 @@ z_step = 0.005
 def main():
     
     # loop over naming schemes
-    for Re in [0.1,1,10]:
+    for ll in [10,20,30,40]:
         
         path_to_dumps = \
-            r"MacrophyteData\viz_IB3d_1tower_Re{}_len10\dumps.visit".format(Re)
+            r"MacrophyteData\viz_IB3d_4towers_Re0.2_len{}\dumps.visit".format(ll)
+        assert os.path.isfile(path_to_dumps)
         out_file = \
-            r"MacrophyteAvgs\viz_IB3d_1tower_Re{}_len10_avgs.txt".format(Re)
+            r"MacrophyteAvgs\viz_IB3d_4towers_Re0.2_len{}_avgs.txt".format(ll)
         
         # get averages from data
         
