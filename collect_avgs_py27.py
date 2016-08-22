@@ -8,6 +8,7 @@ This script is meant to be run directly through a Python 2.7 interpreter.'''
 
 from __future__ import division # make float division the default
 import sys
+import os.path
 ############# Edit with proper VisIt path!!! #############
 sys.path.append("C:\Program Files\LLNL\VisIt 2.10.2\lib\site-packages")
 #############
@@ -19,11 +20,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Full path to dumps file
-path_to_dumps = r"MacrophyteData\viz_IB3d_16towers_Re0.2_len10\dumps.visit"
+path_to_dumps = r"MacrophyteData\viz_IB3d_16towers_Re1_len10\dumps.visit"
+assert os.path.isfile(path_to_dumps)
                 #"C:\Users\Arviragus\Dropbox\MacrophyteProject"+\
                 #"\Visit3D\sample_viz_IB3d\dumps.visit"
 # Place to save output (text file)
-out_file = r"MacrophyteAvgs\viz_IB3d_16towers_Re0.2_len10_avgs.txt"
+out_file = r"MacrophyteAvgs\viz_IB3d_16towers_Re1_len10_avgs.txt"
                 #"C:\Users\Arviragus\Dropbox\MacrophyteProject"+\
                 #"\PythonScripts\AnalysisData\outfile"
 
