@@ -123,21 +123,28 @@ def compare_heights(tower_num, re, length_list):
     # plot setup
     f, axarr = plt.subplots(3, sharex=True)
     axarr[0].hold(True)
-    axarr[0].set_title('Velocity magnitude avgs compared across tower height')
+    axarr[0].set_title(
+        'Avg. {} tower fluid velocity at Re {} by tower height'.format(tower_num,re))
     axarr[0].set_ylabel('Avg. X abs val.')
+    axarr[0].set_xlim(data_list[0][0][0],data_list[0][0][-1])
     axarr[1].hold(True)
     axarr[1].set_ylabel('Avg. Y abs val.')
+    axarr[1].set_xlim(data_list[1][0][0],data_list[1][0][-1])
     axarr[2].hold(True)
     axarr[2].set_ylabel('Avg. Z abs val.')
-    axarr[2].set_xlabel('Z intercept')
+    axarr[2].set_xlim(data_list[2][0][0],data_list[2][0][-1])
+    axarr[2].set_xlabel('Z intercept of plane')
     
     # color setup
-    color_list = np.linspace(0.05,0.95,len(length_list))
+    color_list = np.linspace(0.95,0.05,len(length_list))
     
     for n,height in enumerate(length_list):
         for ii in range(3):
             axarr[ii].plot(data_list[n][0],data_list[n][ii+1],
-                label='Tower height {}'.format(height),c=cmap(color_list(n)))
+                label='Tower height {}'.format(height),c=cmap(color_list[n]))
+    for ii in range(3):
+        leg = axarr[ii].legend(loc="upper left",fontsize=11)
+        leg.get_frame().set_alpha(0.65)
     plt.show()
     
     
@@ -157,27 +164,34 @@ def compare_re(tower_num, re_list, length):
     # plot setup
     f, axarr = plt.subplots(3, sharex=True)
     axarr[0].hold(True)
-    axarr[0].set_title('Velocity magnitude avgs compared across Re numbers')
+    axarr[0].set_title(
+        'Avg. {} tower fluid velocity by Re. Tower height: {}/64'.format(tower_num,length))
     axarr[0].set_ylabel('Avg. X abs val.')
+    axarr[0].set_xlim(data_list[0][0][0],data_list[0][0][-1])
     axarr[1].hold(True)
     axarr[1].set_ylabel('Avg. Y abs val.')
+    axarr[1].set_xlim(data_list[1][0][0],data_list[1][0][-1])
     axarr[2].hold(True)
     axarr[2].set_ylabel('Avg. Z abs val.')
-    axarr[2].set_xlabel('Z intercept')
+    axarr[2].set_xlim(data_list[2][0][0],data_list[2][0][-1])
+    axarr[2].set_xlabel('Z intercept of plane')
     
     # color setup
-    color_list = np.linspace(0.05,0.95,len(re_list))
+    color_list = np.linspace(0.95,0.05,len(re_list))
     
     for n,re in enumerate(re_list):
         for ii in range(3):
             axarr[ii].plot(data_list[n][0],data_list[n][ii+1],
-                label='Re = {}'.format(re),c=cmap(color_list(n)))
+                label='Re = {}'.format(re),c=cmap(color_list[n]))
+    for ii in range(3):
+        leg = axarr[ii].legend(loc="upper right",fontsize=11)
+        leg.get_frame().set_alpha(0.65)
     plt.show()
     
     
 def fit_model(tower_num,re, length):
-    '''Find the alpha that provides the best fit of the analytical model to
-    the data.
+    '''Find the alpha (permeability) that provides the best fit of the analytical 
+    model to the data.
     
     Arguments:
         tower_num: number of towers
@@ -229,8 +243,8 @@ def fit_model(tower_num,re, length):
     
 
 def fit_model_loop(tower_num,re, length):
-    '''Find the alpha that provides the best fit of the analytical model to
-    the data. At least one parameter must be a list to be iterated over.
+    '''Find the alpha (permeability) that provides the best fit of the analytical 
+    model to the data. At least one parameter must be a list to be iterated over.
     
     Arguments:
         tower_num: number of towers
@@ -256,7 +270,7 @@ def fit_model_loop(tower_num,re, length):
     plt.figure()
     ax = plt.axes()
     plt.hold(True)
-    plt.title('Flow velocity: simulation data vs. optimal model')
+    plt.title('Flow velocity: simulation data vs. optimal model',fontsize="x-large")
     
     # Get color cycler
     N = len(tower_num)*len(re)*len(length)
@@ -297,7 +311,8 @@ def fit_model_loop(tower_num,re, length):
                     line.set_label('_no label')
                 clrdict = next(color_cycle)
                 plt.scatter(z_mesh,x_abs_avgs,
-                    label='sim: {} towers, Re {}, len {}'.format(tower,r,l),
+                    label='sim: {} towers, Re {}, len {}. '.format(tower,r,l)+\
+                    r'$\alpha$ = '+'{:.2f}'.format(result_obj.x[0]),
                     color=clrdict['color'])
                 
                 # Print out optimal alpha values
@@ -305,9 +320,10 @@ def fit_model_loop(tower_num,re, length):
                     tower,r,l,result_obj.x
                 ))
                 
-    plt.xlabel('Z')
-    plt.ylabel('Velocity in direction of flow')
-    plt.legend(loc='upper left',fontsize='small')
+    plt.xlabel('Z intercept of plane',fontsize='large')
+    plt.ylabel('Velocity in direction of flow',fontsize='large')
+    leg = plt.legend(loc='upper left',fontsize='small')
+    leg.get_frame().set_alpha(0.65)
     plt.show()
     
     
