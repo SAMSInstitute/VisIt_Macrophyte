@@ -57,7 +57,7 @@ def plot_avgs(z_mesh,x_abs_avgs,y_abs_avgs,z_abs_avgs):
 
 def main(path_to_dumps=path_to_dumps,out_file=out_file,PLOT=True):
     ### This bit just sets a default view of some sort... not really sure ###
-    # (I just dumped this straigt in from recording it in VisIt)
+    # (I just dumped this straight in from recording it in VisIt)
     # Begin spontaneous state
     View2DAtts = View2DAttributes()
     View2DAtts.windowCoords = (0, 1, 0, 1)
@@ -71,7 +71,7 @@ def main(path_to_dumps=path_to_dumps,out_file=out_file,PLOT=True):
     # End spontaneous state
     
     ### Get a nice angle to watch the data collection if window is not off ###
-    # (I just dumped this straigt in from recording it in VisIt)
+    # (I just dumped this straight in from recording it in VisIt)
     View3DAtts = View3DAttributes()
     View3DAtts.viewNormal = (-0.317367, -0.833752, 0.451814)
     View3DAtts.focus = (0, 0, 0)
