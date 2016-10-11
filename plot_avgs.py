@@ -20,6 +20,7 @@ import numpy as np
 from scipy.optimize import least_squares
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes, mark_inset
 plt.rcParams['image.cmap'] = 'viridis'
 cmap = cm.get_cmap('viridis')
 
@@ -151,6 +152,42 @@ def compare_heights(tower_num, re, length_list):
     plt.show()
     
     
+def compare_heights_X(tower_list=[1,4],re_list=[0.1,1,10],length_list=[10,20,30,40]):
+    '''Different plot for each tower length'''
+
+    plt.figure()
+    N = len(re_list)*len(tower_list)
+    axarr = []
+
+    for ii, length in enumerate(length_list):
+        axarr.append(plt.subplot(len(length_list),1,ii+1))
+        axarr[ii].set_title('Avg. fluid velocity with tower length {}/64'.format(length))
+        
+        # Get color cycler
+        cmap = plt.get_cmap('Set2')
+        axarr[ii].set_color_cycle([cmap(k) for k in np.linspace(0,1,N)])
+        color_cycle = axarr[ii]._get_lines.prop_cycler
+
+        for jj, re in enumerate(re_list):
+            for kk, tower in enumerate(tower_list):
+                clrdict = next(color_cycle)
+                # Get data
+                z_mesh,x_abs_avgs,y_abs_avgs,z_abs_avgs,dpdx_avg = \
+                    get_data(tower,re,length)
+                # plot data
+                axarr[ii].plot(z_mesh,z_abs_avgs,color=clrdict['color'],
+                    label='{} tower(s), Re {}'.format(tower,re))
+        leg = axarr[ii].legend(loc="upper left",fontsize=12)
+        leg.get_frame().set_alpha(0.65)
+    
+    # labels
+    axarr[2].set_ylabel('Average fluid velocity in direction of flow',fontsize=12)
+    axarr[-1].set_xlabel('Z intercept of plane')
+
+    plt.show()
+
+
+
 def compare_re(tower_num, re_list, length):
     '''Create a plot comparing averaged data across different Re numbers.
     
@@ -181,6 +218,7 @@ def compare_re(tower_num, re_list, length):
     
     # color setup
     color_list = np.linspace(0.95,0.05,len(re_list))
+    cmap = cm.get_cmap('Paired')
     
     for n,re in enumerate(re_list):
         for ii in range(3):
@@ -189,7 +227,10 @@ def compare_re(tower_num, re_list, length):
     for ii in range(3):
         # plot tower height
         axarr[ii].axvline(x=length/64 - 0.5,color='k',ls='--')
-        leg = axarr[ii].legend(loc="upper right",fontsize=11)
+        if ii > 0:
+            leg = axarr[ii].legend(loc="upper right",ncol=2,fontsize=11)
+        else:
+            leg = axarr[ii].legend(loc="upper left",ncol=2,fontsize=11)
         leg.get_frame().set_alpha(0.65)
     plt.show()
     
@@ -283,6 +324,9 @@ def fit_model_loop(tower_num,re, length):
     ax.set_color_cycle([cmap(k) for k in np.linspace(0,1,N)])
     color_cycle = ax._get_lines.prop_cycler
     
+    # zoomed view
+    axins = inset_axes(ax,"50%","30%",loc=6)
+
     # Iterate over the lists
     for ii,tower in enumerate(tower_num):
         for jj,r in enumerate(re):
@@ -314,6 +358,7 @@ def fit_model_loop(tower_num,re, length):
                 
                 # Plot optimal analytical solution with data
                 line, = ax.plot(z_mesh,model,'k--',label='best-fit Brinkmann model')
+                axins.plot(z_mesh,model,'k--',label='best-fit Brinkmann model')
                 if ii+jj+kk > 0:
                     line.set_label('_no label')
                 clrdict = next(color_cycle)
@@ -321,27 +366,145 @@ def fit_model_loop(tower_num,re, length):
                     label='{} tower, Re {}, len {}/64. '.format(tower,r,l)+\
                     r'$\alpha$ = '+'{:.2f}'.format(result_obj.x[0]),
                     color=clrdict['color'],alpha=0.65)
+                axins.scatter(z_mesh,x_abs_avgs,
+                    label='{} tower, Re {}, len {}/64. '.format(tower,r,l)+\
+                    r'$\alpha$ = '+'{:.2f}'.format(result_obj.x[0]),
+                    color=clrdict['color'],alpha=0.65)
                 # Plot where the top of the cylinder is
                 zind = np.argwhere(z_mesh<=a-0.5)
                 ax.plot(z_mesh[zind[-1]],x_abs_avgs[zind[-1]],'*',
                     color=clrdict['color'],mec=clrdict['color'],ms=16,mew=2)
-                
+                axins.plot(z_mesh[zind[-1]],x_abs_avgs[zind[-1]],'*',
+                    color=clrdict['color'],mec=clrdict['color'],ms=16,mew=2)
                 # Print out optimal alpha values
                 print(r'{} towers, Re {}, len {}, $\alpha$ = {}'.format(
                     tower,r,l,result_obj.x
                 ))
                 
-    plt.xlabel('Z intercept of plane',fontsize='large')
-    plt.ylabel('Velocity in direction of flow',fontsize='large')
-    plt.xlim([-0.5,0.5])
-    plt.ylim(ymin=0)
+    ax.set_xlabel('Z intercept of plane',fontsize='large')
+    ax.set_ylabel('Velocity in direction of flow',fontsize='large')
+    ax.set_xlim([-0.5,0.425])
+    ax.set_ylim(ymin=0)
     #plt.ylim([0,0.008])
-    leg = plt.legend(loc='upper left',fontsize='medium')
+    leg = ax.legend(loc='upper left',fontsize='medium')
     leg.get_frame().set_alpha(0.65)
+
+    axins.set_xlim(-0.5,0.15)
+    axins.set_ylim(0,0.005)
+    plt.yticks(visible=False)
+    mark_inset(ax,axins,loc1=1,loc2=3,fc="none",ec="0.45")
     plt.show()
     
     
     
+def journal_figures():
+    '''Plot and save journal figures'''
+
+    '''Fit model for variable tower length'''
+    tower_num = 1 # one tower
+    re = 1 # Re number
+    length = [10,20,30,40] # lengths
+
+    # Make all arguments lists
+    if not isinstance(tower_num,list):
+       tower_num = [tower_num] 
+    if not isinstance(re,list):
+        re = [re]
+    if not isinstance(length,list):
+        length = [length]
+        
+    # Parse the Reynolds number into component parameters
+    rho = 1000 # density of water is 1000 kg/m**3
+    v = 0.1 # max velocity of fluid
+    L = 1 # characteristic length
+    
+    result_obj = []
+    model = []
+    
+    plt.figure()
+    ax = plt.axes()
+    plt.hold(True)
+    plt.title('Flow velocity: simulation data vs. optimal model',fontsize="x-large")
+    
+    # Get color cycler
+    N = len(tower_num)*len(re)*len(length)
+    cmap = plt.get_cmap('Set2')
+    ax.set_color_cycle([cmap(k) for k in np.linspace(0,1,N)])
+    color_cycle = ax._get_lines.prop_cycler
+    
+    # zoomed view
+    axins = inset_axes(ax,"50%","30%",loc=6)
+
+    # Iterate over the lists
+    for ii,tower in enumerate(tower_num):
+        for jj,r in enumerate(re):
+            for kk,l in enumerate(length):
+                
+                mu = rho*v*L/r
+                
+                # Get data
+                z_mesh,x_abs_avgs,y_abs_avgs,z_abs_avgs,dpdx_avg = \
+                    get_data(tower,r,l)
+                
+                a = l/64
+                b = L - a
+
+                # Solve nonlinear least squares, just fitting up to tower height
+                zind = np.argwhere(z_mesh>a-0.5)[0].flatten()
+                result_obj = least_squares(resid,1.,bounds=(0,np.inf),
+                                    args=(a,b,v,dpdx_avg,mu,
+                                    z_mesh[:zind],x_abs_avgs[:zind]))
+                
+                # Get fitted analytical solution
+                # The analytical model expects the bottom of the domain to be at -a, where
+                #   a is the height of the porous region. Thus we need to shift z_mesh,
+                #   since it typically starts somewhere else (-0.5).
+                z_mesh_model = z_mesh - z_mesh[0] - a
+                
+                model = flow_model(
+                    z_mesh_model,float(result_obj.x),a,b,v,dpdx_avg,mu)
+                
+                # Plot optimal analytical solution with data
+                line, = ax.plot(z_mesh,model,'k--',label='best-fit Brinkmann model')
+                axins.plot(z_mesh,model,'k--',label='best-fit Brinkmann model')
+                if ii+jj+kk > 0:
+                    line.set_label('_no label')
+                clrdict = next(color_cycle)
+                ax.scatter(z_mesh,x_abs_avgs,
+                    label='{} tower, Re {}, len {}/64. '.format(tower,r,l)+\
+                    r'$\alpha$ = '+'{:.2f}'.format(result_obj.x[0]),
+                    color=clrdict['color'],alpha=0.65)
+                axins.scatter(z_mesh,x_abs_avgs,
+                    label='{} tower, Re {}, len {}/64. '.format(tower,r,l)+\
+                    r'$\alpha$ = '+'{:.2f}'.format(result_obj.x[0]),
+                    color=clrdict['color'],alpha=0.65)
+                # Plot where the top of the cylinder is
+                zind = np.argwhere(z_mesh<=a-0.5)
+                ax.plot(z_mesh[zind[-1]],x_abs_avgs[zind[-1]],'*',
+                    color=clrdict['color'],mec=clrdict['color'],ms=16,mew=2)
+                axins.plot(z_mesh[zind[-1]],x_abs_avgs[zind[-1]],'*',
+                    color=clrdict['color'],mec=clrdict['color'],ms=16,mew=2)
+                # Print out optimal alpha values
+                print(r'{} towers, Re {}, len {}, $\alpha$ = {}'.format(
+                    tower,r,l,result_obj.x
+                ))
+                
+    ax.set_xlabel('Z intercept of plane',fontsize='large')
+    ax.set_ylabel('Velocity in direction of flow',fontsize='large')
+    ax.set_xlim([-0.5,0.425])
+    ax.set_ylim(ymin=0)
+    #plt.ylim([0,0.008])
+    leg = ax.legend(loc='upper left',fontsize='medium')
+    leg.get_frame().set_alpha(0.65)
+
+    axins.set_xlim(-0.5,0.15)
+    axins.set_ylim(0,0.005)
+    plt.yticks(visible=False)
+    mark_inset(ax,axins,loc1=1,loc2=3,fc="none",ec="0.45")
+    plt.show()
+
+
+
 def main():
     '''Interactive menu here'''
     pass
