@@ -142,6 +142,9 @@ def compare_heights(tower_num, re, length_list):
         for ii in range(3):
             axarr[ii].plot(data_list[n][0],data_list[n][ii+1],
                 label='Tower height {}'.format(height),c=cmap(color_list[n]))
+            # plot a vertical line at tower height
+            top = height/64 - 0.5
+            axarr[ii].axvline(x=top,color=cmap(color_list[n]),ls='--')
     for ii in range(3):
         leg = axarr[ii].legend(loc="upper left",fontsize=11)
         leg.get_frame().set_alpha(0.65)
@@ -149,12 +152,12 @@ def compare_heights(tower_num, re, length_list):
     
     
 def compare_re(tower_num, re_list, length):
-    '''Create a plot comparing averaged data across different tower heights.
+    '''Create a plot comparing averaged data across different Re numbers.
     
     Arguments:
         tower_num: number of towers (int)
         re: list of Reynolds numbers to compare across (ints)
-        length_list: tower height (int)
+        length: tower height (int)
     '''
     
     data_list = []
@@ -184,6 +187,8 @@ def compare_re(tower_num, re_list, length):
             axarr[ii].plot(data_list[n][0],data_list[n][ii+1],
                 label='Re = {}'.format(re),c=cmap(color_list[n]))
     for ii in range(3):
+        # plot tower height
+        axarr[ii].axvline(x=length/64 - 0.5,color='k',ls='--')
         leg = axarr[ii].legend(loc="upper right",fontsize=11)
         leg.get_frame().set_alpha(0.65)
     plt.show()
@@ -228,7 +233,7 @@ def fit_model(tower_num,re, length):
     ax = plt.axes()
     plt.title('Flow velocity: data vs. optimal model')
     plt.hold(True)
-    plt.plot(z_mesh,model,'r--',label='best-fit model')
+    plt.plot(z_mesh,model,'r--',label='best-fit Brinkmann model')
     plt.scatter(z_mesh,x_abs_avgs,label='x-velocity data')
     plt.hold(False)
     plt.text(0.05,0.88,r'Optimal $\alpha$ = {}'.format(float(result_obj.x))+
@@ -274,7 +279,7 @@ def fit_model_loop(tower_num,re, length):
     
     # Get color cycler
     N = len(tower_num)*len(re)*len(length)
-    cmap = plt.get_cmap('Set3')
+    cmap = plt.get_cmap('Set2')
     ax.set_color_cycle([cmap(k) for k in np.linspace(0,1,N)])
     color_cycle = ax._get_lines.prop_cycler
     
@@ -292,9 +297,11 @@ def fit_model_loop(tower_num,re, length):
                 a = l/64
                 b = L - a
 
-                # Solve nonlinear least squares
+                # Solve nonlinear least squares, just fitting up to tower height
+                zind = np.argwhere(z_mesh>a-0.5)[0].flatten()
                 result_obj = least_squares(resid,1.,bounds=(0,np.inf),
-                                    args=(a,b,v,dpdx_avg,mu,z_mesh,x_abs_avgs))
+                                    args=(a,b,v,dpdx_avg,mu,
+                                    z_mesh[:zind],x_abs_avgs[:zind]))
                 
                 # Get fitted analytical solution
                 # The analytical model expects the bottom of the domain to be at -a, where
@@ -306,14 +313,18 @@ def fit_model_loop(tower_num,re, length):
                     z_mesh_model,float(result_obj.x),a,b,v,dpdx_avg,mu)
                 
                 # Plot optimal analytical solution with data
-                line, = plt.plot(z_mesh,model,'k--',label='best-fit model')
+                line, = ax.plot(z_mesh,model,'k--',label='best-fit Brinkmann model')
                 if ii+jj+kk > 0:
                     line.set_label('_no label')
                 clrdict = next(color_cycle)
-                plt.scatter(z_mesh,x_abs_avgs,
-                    label='sim: {} towers, Re {}, len {}. '.format(tower,r,l)+\
+                ax.scatter(z_mesh,x_abs_avgs,
+                    label='{} tower, Re {}, len {}/64. '.format(tower,r,l)+\
                     r'$\alpha$ = '+'{:.2f}'.format(result_obj.x[0]),
-                    color=clrdict['color'])
+                    color=clrdict['color'],alpha=0.65)
+                # Plot where the top of the cylinder is
+                zind = np.argwhere(z_mesh<=a-0.5)
+                ax.plot(z_mesh[zind[-1]],x_abs_avgs[zind[-1]],'*',
+                    color=clrdict['color'],mec=clrdict['color'],ms=16,mew=2)
                 
                 # Print out optimal alpha values
                 print(r'{} towers, Re {}, len {}, $\alpha$ = {}'.format(
@@ -322,7 +333,10 @@ def fit_model_loop(tower_num,re, length):
                 
     plt.xlabel('Z intercept of plane',fontsize='large')
     plt.ylabel('Velocity in direction of flow',fontsize='large')
-    leg = plt.legend(loc='upper left',fontsize='small')
+    plt.xlim([-0.5,0.5])
+    plt.ylim(ymin=0)
+    #plt.ylim([0,0.008])
+    leg = plt.legend(loc='upper left',fontsize='medium')
     leg.get_frame().set_alpha(0.65)
     plt.show()
     

@@ -1,0 +1,23 @@
+Provide a graph of |u| vs z within the cylinder layer for each Re at a fixed tower length (1 tower)
+
+Figures ?? - ?? show the magnitude of the velocity average across the xy-plane as a function
+of height within the cylinder layer. Please provide graphs of |u| vs z within the cylinder layer.
+Each of the four graphs corresponds to a different height. Each graph shows the different Re and
+domain sizes (for a total of 6 lines in each graph).
+
+We compare the results of the averaged flow as a function of height from the three-dimensional
+simulations to the 1D analytical model. To begin, we average the flow across the xy-plane at each
+height. We then fit the numerical data to the Brinkmann model using the best choice of the porosity.
+Christopher, please add more details.
+Figure ?? shows a sample of the averaged velocity magnitude from the numerical data vs.
+height compared to the analytical model. Please choose the most interesting cases for this, I will
+leave it to you.
+Figure ?? shows the best fit porosity coefficients. A shows porosity vs. Re for 1 cylinder at
+height 10/64. B shows porosity vs. Re for each of the domain sizes. C and D show porosity vs.
+height for each of the Reynolds numbers for domain size 0.125 (C) and domain size 0.25 (D).
+To quantify the three-dimensionality of the flow, we calculate the average magnitude of the
+z-component of the velocity across the xy-plane as a function of height. Figure ?? shows the
+average z-component of the velocity magnitude over the average velocity magnitude as a function
+of height for one cylinder at Re = 0.1,1,10 and for cylinder heights 10/64 (A), 20/64 (B), 30/64
+(C), and 40/64 (D). Each panel should be a different height. The different Re should be different
+lines.
