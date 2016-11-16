@@ -37,7 +37,7 @@ def flow_model(z_ary,alpha,a,b,U,dpdx,mu):
     '''Evaluate the analytical 2D flow model at and above the porous tower.
     Flow is assumed to be moving in the x direction with constant velocity in
     that direction for a given value of z.
-    
+
     Arguments:
         z_ary: position in the z direction. ndarray
             The base of the domain is -a, the top b, and the top of the cylinder
@@ -48,27 +48,27 @@ def flow_model(z_ary,alpha,a,b,U,dpdx,mu):
         U: u(b). This is v in input3d
         dpdx: dp/dx change in momentum constant (from data parsing)
         mu: constant, dynamic viscosity
-        
+
     Returns:
         u(z): velocity of flow in the x direction at z
         '''
-        
+
     # Calculate C and D constants and then get A and B based on these
 
     C = (dpdx*(-0.5*alpha**2*b**2+alpha*b*exp(-alpha*a)-exp(-alpha*a)+1) +
         U*alpha**2*mu)/(alpha**2*mu*(alpha*b*exp(-2*alpha*a)+alpha*b-
         exp(-2*alpha*a)+1))
 
-    D = (dpdx*(0.5*alpha**2*b**2+alpha*b*exp(alpha*a)+exp(alpha*a)-1) - 
+    D = (dpdx*(0.5*alpha**2*b**2+alpha*b*exp(alpha*a)+exp(alpha*a)-1) -
         U*alpha**2*mu)/(alpha**2*mu*(alpha*b*exp(2*alpha*a)+alpha*b+
         exp(2*alpha*a)-1))
-    
+
     A = alpha*C - alpha*D
     B = C + D - dpdx/(alpha**2*mu)
-    
+
     # Form solution array
     sol = np.zeros_like(z_ary)
-    
+
     for n,z in enumerate(z_ary):
         if z > 0:
             #Region I
@@ -82,16 +82,16 @@ def flow_model(z_ary,alpha,a,b,U,dpdx,mu):
 def resid(alpha,a,b,v,dpdx,mu,z_mesh,x_abs_avgs):
     '''This is mostly a wrapper around flow_model for the
     least squares algorithm'''
-    
+
     # The analytical model expects the bottom of the domain to be at -a, where
     #   a is the height of the porous region. Thus we need to shift z_mesh,
     #   since it typically starts somewhere else (-0.5).
     z_mesh_model = z_mesh - z_mesh[0] - a
     # Get analytical u(z) values
     u = flow_model(z_mesh_model,alpha,a,b,v,dpdx,mu)
-    
+
     # Return residuals
-    return u - x_abs_avgs 
+    return u - x_abs_avgs
 
 
 def get_data(tower, re, length):
@@ -110,49 +110,57 @@ def get_data(tower, re, length):
 
 def compare_heights(tower_num, re, length_list):
     '''Create a plot comparing averaged data across different tower heights.
-    
+
     Arguments:
         tower_num: number of towers (int)
         re: Reynolds number (int)
         length_list: list of tower heights to compare across
     '''
-    
+
     data_list = []
     for height in length_list:
         data_list.append(get_data(tower_num, re, height))
-    
+
     # plot setup
     f, axarr = plt.subplots(3, sharex=True)
     axarr[0].hold(True)
     axarr[0].set_title(
-        'Avg. {} tower fluid velocity at Re {} by tower height'.format(tower_num,re))
-    axarr[0].set_ylabel('Avg. X abs val.')
+        'Planar avgs. for {} tower fluid velocity at Re {} by tower height'.format(tower_num,re))
+    axarr[0].set_ylabel('Avg. velocity in\n direction of flow (X)')
     axarr[0].set_xlim(data_list[0][0][0],data_list[0][0][-1])
+    axarr[0].set_ylim(0,0.01)
     axarr[1].hold(True)
-    axarr[1].set_ylabel('Avg. Y abs val.')
-    axarr[1].set_xlim(data_list[1][0][0],data_list[1][0][-1])
+    axarr[1].set_ylabel('Avg. Y/X velocity')
+    axarr[1].set_xlim(data_list[0][0][0],data_list[0][0][-1])
     axarr[2].hold(True)
-    axarr[2].set_ylabel('Avg. Z abs val.')
-    axarr[2].set_xlim(data_list[2][0][0],data_list[2][0][-1])
+    axarr[2].set_ylabel('Avg. Z/X velocity')
+    axarr[2].set_xlim(data_list[0][0][0],data_list[0][0][-1])
     axarr[2].set_xlabel('Z intercept of plane')
-    
+
     # color setup
-    color_list = np.linspace(0.95,0.05,len(length_list))
-    
+    color_list = np.linspace(0.85,0.05,len(length_list))
+
     for n,height in enumerate(length_list):
         for ii in range(3):
-            axarr[ii].plot(data_list[n][0],data_list[n][ii+1],
-                label='Tower height {}'.format(height),c=cmap(color_list[n]))
+            if ii == 0:
+                axarr[ii].plot(data_list[n][0],data_list[n][1],
+                    label='Tower height {}/64 mm'.format(height),c=cmap(color_list[n]))
+            else:
+                this_data = np.ma.array(data_list[n][ii+1]/data_list[n][1])
+                masked_data = np.ma.masked_where(data_list[n][ii+1] < 1e-10, this_data)
+                axarr[ii].plot(data_list[n][0],this_data,
+                    label='Tower height {}/64 mm'.format(height),c=cmap(color_list[n]))
             # plot a vertical line at tower height
             top = height/64 - 0.5
             axarr[ii].axvline(x=top,color=cmap(color_list[n]),ls='--')
     for ii in range(3):
-        leg = axarr[ii].legend(loc="upper left",fontsize=11)
+        leg = axarr[ii].legend(loc="upper right",fontsize=11)
         leg.get_frame().set_alpha(0.65)
+    plt.tight_layout()
     plt.show()
-    
-    
-def compare_heights_X(tower_list=[1,4],re_list=[0.1,1,10],length_list=[10,20,30,40]):
+
+
+def compare_heights_X(tower_list=[1,4,16],re_list=[0.2,1],length_list=[10]):
     '''Different plot for each tower length'''
 
     plt.figure()
@@ -162,7 +170,7 @@ def compare_heights_X(tower_list=[1,4],re_list=[0.1,1,10],length_list=[10,20,30,
     for ii, length in enumerate(length_list):
         axarr.append(plt.subplot(len(length_list),1,ii+1))
         axarr[ii].set_title('Avg. fluid velocity with tower length {}/64'.format(length))
-        
+
         # Get color cycler
         cmap = plt.get_cmap('Set2')
         axarr[ii].set_color_cycle([cmap(k) for k in np.linspace(0,1,N)])
@@ -179,9 +187,12 @@ def compare_heights_X(tower_list=[1,4],re_list=[0.1,1,10],length_list=[10,20,30,
                     label='{} tower(s), Re {}'.format(tower,re))
         leg = axarr[ii].legend(loc="upper left",fontsize=12)
         leg.get_frame().set_alpha(0.65)
-    
+
     # labels
-    axarr[2].set_ylabel('Average fluid velocity in direction of flow',fontsize=12)
+    if len(length_list) > 3:
+        axarr[2].set_ylabel('Average fluid velocity in direction of flow',fontsize=12)
+    else:
+        axarr[0].set_ylabel('Average fluid velocity in direction of flow',fontsize=12)
     axarr[-1].set_xlabel('Z intercept of plane')
 
     plt.show()
@@ -190,17 +201,17 @@ def compare_heights_X(tower_list=[1,4],re_list=[0.1,1,10],length_list=[10,20,30,
 
 def compare_re(tower_num, re_list, length):
     '''Create a plot comparing averaged data across different Re numbers.
-    
+
     Arguments:
         tower_num: number of towers (int)
         re: list of Reynolds numbers to compare across (ints)
         length: tower height (int)
     '''
-    
+
     data_list = []
     for re in re_list:
         data_list.append(get_data(tower_num, re, length))
-    
+
     # plot setup
     f, axarr = plt.subplots(3, sharex=True)
     axarr[0].hold(True)
@@ -210,16 +221,16 @@ def compare_re(tower_num, re_list, length):
     axarr[0].set_xlim(data_list[0][0][0],data_list[0][0][-1])
     axarr[1].hold(True)
     axarr[1].set_ylabel('Avg. Y abs val.')
-    axarr[1].set_xlim(data_list[1][0][0],data_list[1][0][-1])
+    axarr[1].set_xlim(data_list[0][0][0],data_list[0][0][-1])
     axarr[2].hold(True)
     axarr[2].set_ylabel('Avg. Z abs val.')
-    axarr[2].set_xlim(data_list[2][0][0],data_list[2][0][-1])
+    axarr[2].set_xlim(data_list[0][0][0],data_list[0][0][-1])
     axarr[2].set_xlabel('Z intercept of plane')
-    
+
     # color setup
-    color_list = np.linspace(0.95,0.05,len(re_list))
-    cmap = cm.get_cmap('Paired')
-    
+    color_list = np.linspace(0.85,0.05,len(re_list))
+    cmap = cm.get_cmap('viridis')
+
     for n,re in enumerate(re_list):
         for ii in range(3):
             axarr[ii].plot(data_list[n][0],data_list[n][ii+1],
@@ -233,17 +244,17 @@ def compare_re(tower_num, re_list, length):
             leg = axarr[ii].legend(loc="upper left",ncol=2,fontsize=11)
         leg.get_frame().set_alpha(0.65)
     plt.show()
-    
-    
+
+
 def fit_model(tower_num,re, length):
-    '''Find the alpha (permeability) that provides the best fit of the analytical 
+    '''Find the alpha (permeability) that provides the best fit of the analytical
     model to the data.
-    
+
     Arguments:
         tower_num: number of towers
         re: Reynolds number
         length: tower height'''
-    
+
     # Parse the Reynolds number into component parameters
     rho = 1000 # density of water is 1000 kg/m**3
     v = 0.1 # max velocity of fluid
@@ -251,24 +262,24 @@ def fit_model(tower_num,re, length):
     mu = rho*v*L/re
 
     z_mesh,x_abs_avgs,y_abs_avgs,z_abs_avgs,dpdx_avg = get_data(tower_num,re,length)
-    
+
     a = length/64
     b = L - a
 
     # Solve nonlinear least squares
     result_obj = least_squares(resid,1.,bounds=(0,np.inf),
                                args=(a,b,v,dpdx_avg,mu,z_mesh,x_abs_avgs))
-    
+
     # Get fitted analytical solution
     # The analytical model expects the bottom of the domain to be at -a, where
     #   a is the height of the porous region. Thus we need to shift z_mesh,
     #   since it typically starts somewhere else (-0.5).
     z_mesh_model = z_mesh - z_mesh[0] - a
-    
+
     model = flow_model(z_mesh_model,float(result_obj.x),a,b,v,dpdx_avg,mu)
-    
+
     #import pdb; pdb.set_trace()
-    
+
     # Plot optimal analytical solution with data
     plt.figure()
     ax = plt.axes()
@@ -285,45 +296,45 @@ def fit_model(tower_num,re, length):
     plt.ylabel('velocity')
     plt.legend(loc='lower right')
     plt.show()
-    
-    
+
+
 
 def fit_model_loop(tower_num,re, length):
-    '''Find the alpha (permeability) that provides the best fit of the analytical 
+    '''Find the alpha (permeability) that provides the best fit of the analytical
     model to the data. At least one parameter must be a list to be iterated over.
-    
+
     Arguments:
         tower_num: number of towers
         re: Reynolds number
         length: tower height'''
-    
+
     # Make all arguments lists
     if not isinstance(tower_num,list):
-       tower_num = [tower_num] 
+       tower_num = [tower_num]
     if not isinstance(re,list):
         re = [re]
     if not isinstance(length,list):
         length = [length]
-        
+
     # Parse the Reynolds number into component parameters
     rho = 1000 # density of water is 1000 kg/m**3
     v = 0.1 # max velocity of fluid
     L = 1 # characteristic length
-    
+
     result_obj = []
     model = []
-    
+
     plt.figure()
     ax = plt.axes()
     plt.hold(True)
     plt.title('Flow velocity: simulation data vs. optimal model',fontsize="x-large")
-    
+
     # Get color cycler
     N = len(tower_num)*len(re)*len(length)
     cmap = plt.get_cmap('Set2')
     ax.set_color_cycle([cmap(k) for k in np.linspace(0,1,N)])
     color_cycle = ax._get_lines.prop_cycler
-    
+
     # zoomed view
     axins = inset_axes(ax,"50%","30%",loc=6)
 
@@ -331,13 +342,13 @@ def fit_model_loop(tower_num,re, length):
     for ii,tower in enumerate(tower_num):
         for jj,r in enumerate(re):
             for kk,l in enumerate(length):
-                
+
                 mu = rho*v*L/r
-                
+
                 # Get data
                 z_mesh,x_abs_avgs,y_abs_avgs,z_abs_avgs,dpdx_avg = \
                     get_data(tower,r,l)
-                
+
                 a = l/64
                 b = L - a
 
@@ -346,16 +357,16 @@ def fit_model_loop(tower_num,re, length):
                 result_obj = least_squares(resid,1.,bounds=(0,np.inf),
                                     args=(a,b,v,dpdx_avg,mu,
                                     z_mesh[:zind],x_abs_avgs[:zind]))
-                
+
                 # Get fitted analytical solution
                 # The analytical model expects the bottom of the domain to be at -a, where
                 #   a is the height of the porous region. Thus we need to shift z_mesh,
                 #   since it typically starts somewhere else (-0.5).
                 z_mesh_model = z_mesh - z_mesh[0] - a
-                
+
                 model = flow_model(
                     z_mesh_model,float(result_obj.x),a,b,v,dpdx_avg,mu)
-                
+
                 # Plot optimal analytical solution with data
                 line, = ax.plot(z_mesh,model,'k--',label='best-fit Brinkmann model')
                 axins.plot(z_mesh,model,'k--',label='best-fit Brinkmann model')
@@ -380,7 +391,7 @@ def fit_model_loop(tower_num,re, length):
                 print(r'{} towers, Re {}, len {}, $\alpha$ = {}'.format(
                     tower,r,l,result_obj.x
                 ))
-                
+
     ax.set_xlabel('Z intercept of plane',fontsize='large')
     ax.set_ylabel('Velocity in direction of flow',fontsize='large')
     ax.set_xlim([-0.5,0.425])
@@ -394,9 +405,9 @@ def fit_model_loop(tower_num,re, length):
     plt.yticks(visible=False)
     mark_inset(ax,axins,loc1=1,loc2=3,fc="none",ec="0.45")
     plt.show()
-    
-    
-    
+
+
+
 def journal_figures():
     '''Plot and save journal figures'''
 
@@ -407,31 +418,31 @@ def journal_figures():
 
     # Make all arguments lists
     if not isinstance(tower_num,list):
-       tower_num = [tower_num] 
+       tower_num = [tower_num]
     if not isinstance(re,list):
         re = [re]
     if not isinstance(length,list):
         length = [length]
-        
+
     # Parse the Reynolds number into component parameters
     rho = 1000 # density of water is 1000 kg/m**3
     v = 0.1 # max velocity of fluid
     L = 1 # characteristic length
-    
+
     result_obj = []
     model = []
-    
+
     plt.figure()
     ax = plt.axes()
     plt.hold(True)
     plt.title('Flow velocity: simulation data vs. optimal model',fontsize="x-large")
-    
+
     # Get color cycler
     N = len(tower_num)*len(re)*len(length)
     cmap = plt.get_cmap('Set2')
     ax.set_color_cycle([cmap(k) for k in np.linspace(0,1,N)])
     color_cycle = ax._get_lines.prop_cycler
-    
+
     # zoomed view
     axins = inset_axes(ax,"50%","30%",loc=6)
 
@@ -439,13 +450,13 @@ def journal_figures():
     for ii,tower in enumerate(tower_num):
         for jj,r in enumerate(re):
             for kk,l in enumerate(length):
-                
+
                 mu = rho*v*L/r
-                
+
                 # Get data
                 z_mesh,x_abs_avgs,y_abs_avgs,z_abs_avgs,dpdx_avg = \
                     get_data(tower,r,l)
-                
+
                 a = l/64
                 b = L - a
 
@@ -454,16 +465,16 @@ def journal_figures():
                 result_obj = least_squares(resid,1.,bounds=(0,np.inf),
                                     args=(a,b,v,dpdx_avg,mu,
                                     z_mesh[:zind],x_abs_avgs[:zind]))
-                
+
                 # Get fitted analytical solution
                 # The analytical model expects the bottom of the domain to be at -a, where
                 #   a is the height of the porous region. Thus we need to shift z_mesh,
                 #   since it typically starts somewhere else (-0.5).
                 z_mesh_model = z_mesh - z_mesh[0] - a
-                
+
                 model = flow_model(
                     z_mesh_model,float(result_obj.x),a,b,v,dpdx_avg,mu)
-                
+
                 # Plot optimal analytical solution with data
                 line, = ax.plot(z_mesh,model,'k--',label='best-fit Brinkmann model')
                 axins.plot(z_mesh,model,'k--',label='best-fit Brinkmann model')
@@ -488,7 +499,7 @@ def journal_figures():
                 print(r'{} towers, Re {}, len {}, $\alpha$ = {}'.format(
                     tower,r,l,result_obj.x
                 ))
-                
+
     ax.set_xlabel('Z intercept of plane',fontsize='large')
     ax.set_ylabel('Velocity in direction of flow',fontsize='large')
     ax.set_xlim([-0.5,0.425])
@@ -508,6 +519,6 @@ def journal_figures():
 def main():
     '''Interactive menu here'''
     pass
-    
+
 if __name__ == "__main__":
     main()

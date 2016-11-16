@@ -1,7 +1,7 @@
 #! /usr/bin/env python2
 
-''' This script interacts with VisIt to average and plot the abs value of 
-components of the velocity field in each cardinal direction. 
+''' This script interacts with VisIt to average and plot the abs value of
+components of the velocity field in each cardinal direction.
 Averages are taken over a plane, which moves in the orthogonal direction by some
 step from a min to a max value taking new averages each time.
 This script is meant to be run directly through a Python 2.7 interpreter.'''
@@ -10,7 +10,7 @@ from __future__ import division # make float division the default
 import sys
 import os.path
 ############# Edit with proper VisIt path!!! #############
-sys.path.append("C:\Program Files\LLNL\VisIt 2.10.2\lib\site-packages")
+sys.path.append("C:\Program Files\LLNL\VisIt 2.11.0\lib\site-packages")
 #############
 from visit import *
 # visit_utils has several nice helper functions, among them "query" which just
@@ -20,12 +20,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Full path to dumps file
-path_to_dumps = r"MacrophyteData\viz_IB3d_16towers_Re1_len10\dumps.visit"
+path_to_dumps = r"MacrophyteData\viz_IB3d_1tower_Re0.2_len20\dumps.visit"
 assert os.path.isfile(path_to_dumps)
                 #"C:\Users\Arviragus\Dropbox\MacrophyteProject"+\
                 #"\Visit3D\sample_viz_IB3d\dumps.visit"
 # Place to save output (text file)
-out_file = r"MacrophyteAvgs\viz_IB3d_16towers_Re1_len10_avgs.txt"
+out_file = r"MacrophyteAvgs\viz_IB3d_1tower_Re0.2_len20_avgs.txt"
                 #"C:\Users\Arviragus\Dropbox\MacrophyteProject"+\
                 #"\PythonScripts\AnalysisData\outfile"
 
@@ -69,7 +69,7 @@ def main(path_to_dumps=path_to_dumps,out_file=out_file,PLOT=True):
     View2DAtts.windowValid = 0
     SetView2D(View2DAtts)
     # End spontaneous state
-    
+
     ### Get a nice angle to watch the data collection if window is not off ###
     # (I just dumped this straight in from recording it in VisIt)
     View3DAtts = View3DAttributes()
@@ -128,9 +128,9 @@ def main(path_to_dumps=path_to_dumps,out_file=out_file,PLOT=True):
     SliceAtts.phi = 90
     SetOperatorOptions(SliceAtts, 0) # Apply Slice settings
     DrawPlots() # Draw the plot
-    
+
     z_mesh = np.arange(z_min,z_max+z_step,z_step)
-    
+
     ### Loop over Z-Axis collecting X averages ###
     x_abs_avgs = []
     for val in z_mesh:
@@ -184,18 +184,18 @@ def main(path_to_dumps=path_to_dumps,out_file=out_file,PLOT=True):
     AddPlot("Pseudocolor","dpdx")
     SetActivePlots(1)
     DrawPlots()
-    dpdx_avg = query("Average Value")    
+    dpdx_avg = query("Average Value")
 
     ### Plot averages ###
     if PLOT:
         plot_avgs(z_mesh,x_abs_avgs,y_abs_avgs,z_abs_avgs)
-    
+
     ### Save averages ###
     np.savetxt(out_file,np.vstack([np.array(z_mesh),
                         x_abs_avgs,y_abs_avgs,z_abs_avgs]))
     with open(out_file[:-8]+'dpdx.txt','w') as fobj:
         fobj.write(str(dpdx_avg))
-                        
+
     print('Data saved to {}'.format(out_file)+' and {}'.format(
             out_file[:-8]+'dpdx.txt'))
     DeleteAllPlots()
@@ -211,4 +211,4 @@ if __name__ == '__main__':
         # Expect a string argument which gives the text filename of previously
         #   generated data from this file. Load and plot it.
         data = np.loadtxt(sys.argv[1])
-        plot_avgs(data[0,:],data[1,:],data[2,:],data[3,:]) 
+        plot_avgs(data[0,:],data[1,:],data[2,:],data[3,:])
