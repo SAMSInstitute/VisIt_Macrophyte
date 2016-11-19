@@ -20,12 +20,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Full path to dumps file
-path_to_dumps = r"MacrophyteData\viz_IB3d_1tower_Re0.2_len20\dumps.visit"
+path_to_dumps = r"MacrophyteData\viz_IB3d_1tower_Re0.5_len40\dumps.visit"
 assert os.path.isfile(path_to_dumps)
                 #"C:\Users\Arviragus\Dropbox\MacrophyteProject"+\
                 #"\Visit3D\sample_viz_IB3d\dumps.visit"
 # Place to save output (text file)
-out_file = r"MacrophyteAvgs\viz_IB3d_1tower_Re0.2_len20_avgs.txt"
+out_file = r"MacrophyteAvgs\viz_IB3d_1tower_Re0.5_len40_avgs.txt"
                 #"C:\Users\Arviragus\Dropbox\MacrophyteProject"+\
                 #"\PythonScripts\AnalysisData\outfile"
 

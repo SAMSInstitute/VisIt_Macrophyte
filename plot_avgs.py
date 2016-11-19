@@ -144,12 +144,12 @@ def compare_heights(tower_num, re, length_list):
         for ii in range(3):
             if ii == 0:
                 axarr[ii].plot(data_list[n][0],data_list[n][1],
-                    label='Tower height {}/64 mm'.format(height),c=cmap(color_list[n]))
+                    label='Tower height: {:.2f}'.format(height/64),c=cmap(color_list[n]))
             else:
                 this_data = np.ma.array(data_list[n][ii+1]/data_list[n][1])
                 masked_data = np.ma.masked_where(data_list[n][ii+1] < 1e-10, this_data)
                 axarr[ii].plot(data_list[n][0],this_data,
-                    label='Tower height {}/64 mm'.format(height),c=cmap(color_list[n]))
+                    label='Tower height: {:.2f}'.format(height/64),c=cmap(color_list[n]))
             # plot a vertical line at tower height
             top = height/64 - 0.5
             axarr[ii].axvline(x=top,color=cmap(color_list[n]),ls='--')
