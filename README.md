@@ -1,10 +1,13 @@
 ## Analyze IBAMR data via VisIt/Python
 
+This code is not yet ready for public consumption, and is not general
+in any way. It only properly runs on my computer to parse the Macrophyte data.
+
 ### Parsing IBAMR data into average velocities
 - You must be running Python 2.7 to parse data from IBAMR.
 - You must have VisIt installed
-- You must edit the Python file with the correct system path to the visit 
-  lib/site-packages folder
+- You must edit the Python file with the correct system path to the VisIt 
+  lib/site-packages folder on your computer
 
 collect_avgs_py27.py is for parsing a single IBAMR simulation
 collect_avgs_loop.py is for looping over several IBAMR simulations, parsing 
