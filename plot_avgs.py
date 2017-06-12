@@ -15,7 +15,7 @@ Date: 6/16/2016
 #   the analytical solution, solving for the best fit value of the permeability
 #       (the parameter alpha?). Use least squares.
 
-from math import exp
+from math import exp, log
 import numpy as np
 from scipy.optimize import least_squares
 import matplotlib.pyplot as plt
@@ -55,13 +55,14 @@ def flow_model(z_ary,alpha,a,b,U,dpdx,mu):
 
     # Calculate C and D constants and then get A and B based on these
 
-    C = (dpdx*(-0.5*alpha**2*b**2+alpha*b*exp(-alpha*a)-exp(-alpha*a)+1) +
-        U*alpha**2*mu)/(alpha**2*mu*(alpha*b*exp(-2*alpha*a)+alpha*b-
+    C = (dpdx*(-0.5*alpha**2*b**2+exp(log(alpha*b)-alpha*a)-exp(-alpha*a)+1) +
+        U*alpha**2*mu)/(alpha**2*mu*(exp(log(alpha*b)-2*alpha*a)+alpha*b-
         exp(-2*alpha*a)+1))
 
-    D = (dpdx*(0.5*alpha**2*b**2+alpha*b*exp(alpha*a)+exp(alpha*a)-1) -
-        U*alpha**2*mu)/(alpha**2*mu*(alpha*b*exp(2*alpha*a)+alpha*b+
-        exp(2*alpha*a)-1))
+    D = (dpdx*(exp(log(0.5*alpha**2*b**2)-2*alpha*a)+exp(log(alpha*b)-alpha*a)+
+        exp(-alpha*a)-exp(-2*alpha*a)) - 
+        exp(log(U*alpha**2*mu)-2*alpha*a))/(alpha**2*mu*
+        (exp(log(alpha*b)-2*alpha*a)+alpha*b-exp(-2*alpha*a)+1))
 
     A = alpha*C - alpha*D
     B = C + D - dpdx/(alpha**2*mu)
@@ -75,7 +76,15 @@ def flow_model(z_ary,alpha,a,b,U,dpdx,mu):
             sol[n] = z**2*dpdx/(2*mu) + A*z + B
         else:
             #Region 2
-            sol[n] = C*exp(alpha*z) + D*exp(-alpha*z) - dpdx/(alpha**2*mu)
+            if C > 0 and D > 0:
+                sol[n] = exp(log(C)+alpha*z) + exp(log(D)-alpha*z) - dpdx/(alpha**2*mu)
+            elif C <= 0 and D > 0:
+                sol[n] = exp(log(D)-alpha*z) - dpdx/(alpha**2*mu)
+            elif C > 0 and D <= 0:
+                sol[n] = exp(log(C)+alpha*z) - dpdx/(alpha**2*mu)
+            else:
+                sol[n] = -dpdx/(alpha**2*mu)
+
     return sol
 
 
@@ -125,7 +134,7 @@ def compare_heights(tower_num, re, length_list):
     f, axarr = plt.subplots(3, sharex=True)
     axarr[0].hold(True)
     axarr[0].set_title(
-        'Planar avgs. for {} tower fluid velocity at Re {} by tower height'.format(tower_num,re))
+        'Planar avgs. for fluid velocity around {} tower at Re {}.'.format(tower_num,re))
     axarr[0].set_ylabel('Avg. velocity in\n direction of flow (X)')
     axarr[0].set_xlim(data_list[0][0][0],data_list[0][0][-1])
     axarr[0].set_ylim(0,0.01)
@@ -144,12 +153,12 @@ def compare_heights(tower_num, re, length_list):
         for ii in range(3):
             if ii == 0:
                 axarr[ii].plot(data_list[n][0],data_list[n][1],
-                    label='Tower height: {:.2f}'.format(height/64),c=cmap(color_list[n]))
+                    label='Tower height: {}/64'.format(height),c=cmap(color_list[n]))
             else:
                 this_data = np.ma.array(data_list[n][ii+1]/data_list[n][1])
                 masked_data = np.ma.masked_where(data_list[n][ii+1] < 1e-10, this_data)
                 axarr[ii].plot(data_list[n][0],this_data,
-                    label='Tower height: {:.2f}'.format(height/64),c=cmap(color_list[n]))
+                    label='Tower height: {}/64'.format(height),c=cmap(color_list[n]))
             # plot a vertical line at tower height
             top = height/64 - 0.5
             axarr[ii].axvline(x=top,color=cmap(color_list[n]),ls='--')
@@ -183,7 +192,7 @@ def compare_heights_X(tower_list=[1,4,16],re_list=[0.2,1],length_list=[10]):
                 z_mesh,x_abs_avgs,y_abs_avgs,z_abs_avgs,dpdx_avg = \
                     get_data(tower,re,length)
                 # plot data
-                axarr[ii].plot(z_mesh,z_abs_avgs,color=clrdict['color'],
+                axarr[ii].plot(z_mesh,x_abs_avgs,color=clrdict['color'],
                     label='{} tower(s), Re {}'.format(tower,re))
         leg = axarr[ii].legend(loc="upper left",fontsize=12)
         leg.get_frame().set_alpha(0.65)
@@ -214,15 +223,12 @@ def compare_re(tower_num, re_list, length):
 
     # plot setup
     f, axarr = plt.subplots(3, sharex=True)
-    axarr[0].hold(True)
     axarr[0].set_title(
         'Avg. {} tower fluid velocity by Re. Tower height: {}/64'.format(tower_num,length))
     axarr[0].set_ylabel('Avg. X abs val.')
     axarr[0].set_xlim(data_list[0][0][0],data_list[0][0][-1])
-    axarr[1].hold(True)
     axarr[1].set_ylabel('Avg. Y abs val.')
     axarr[1].set_xlim(data_list[0][0][0],data_list[0][0][-1])
-    axarr[2].hold(True)
     axarr[2].set_ylabel('Avg. Z abs val.')
     axarr[2].set_xlim(data_list[0][0][0],data_list[0][0][-1])
     axarr[2].set_xlabel('Z intercept of plane')

@@ -6,7 +6,7 @@ from __future__ import division # make float division the default
 import sys
 import os.path
 ############# Edit with proper VisIt path!!! #############
-sys.path.append("C:\Program Files\LLNL\VisIt 2.10.2\lib\site-packages")
+sys.path.append("C:\Program Files\LLNL\VisIt 2.11.0\lib\site-packages")
 #############
 from visit import *
 # visit_utils has several nice helper functions, among them "query" which just
@@ -22,13 +22,15 @@ z_step = 0.005
 def main():
     
     # loop over naming schemes
-    for ll in [10,20,30,40]:
+    for ll in ['02', '1']:
         
         path_to_dumps = \
-            r"MacrophyteData\viz_IB3d_4towers_Re0.2_len{}\dumps.visit".format(ll)
+            r"MacrophyteData\1-tower-Re{}-1_4_spacing\viz_IB3d\dumps.visit".format(ll)
+            # r"MacrophyteData\viz_IB3d_16towers_Re{}_len10\dumps.visit".format(ll)
         assert os.path.isfile(path_to_dumps)
         out_file = \
-            r"MacrophyteAvgs\viz_IB3d_4towers_Re0.2_len{}_avgs.txt".format(ll)
+            r"MacrophyteAvgs\viz_IB3d_1tower_Re{}_1_4_spacing_avgs.txt".format(ll)
+            # r"MacrophyteAvgs\viz_IB3d_16towers_Re{}_len10_avgs.txt".format(ll)
         
         # get averages from data
         
@@ -71,7 +73,7 @@ def main():
         ### Open data, plot x-magnitude, add slice ###
         OpenDatabase("localhost:"+path_to_dumps, 0) #opens data to first time step
         last_time = TimeSliderGetNStates() - 1 #returns the number of time slider states
-                                               #   subtract 1 for base 0
+                                            #   subtract 1 for base 0
         SetTimeSliderState(last_time)
         # Define some new variables
         DefineScalarExpression("U_x_abs", "abs(<U_x>)") # abs of U in x direction

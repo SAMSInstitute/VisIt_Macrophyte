@@ -17,3 +17,9 @@ Run for heights 10,20,30,40(/64) at Re = 0.1, 1, 10
     
 NAMING CONVENTION:
 viz_IB3d_{}tower_Re{}_len{} (num of towers, Re, tower height)
+
+------------------------------
+NEW NOTES:
+
+Spacing runs take longer with more spacing (1 vs. 1/2 or 1/4) and with lower Re.
+It may not be possible to get 1 spacing at Re 1 and 0.2
