@@ -117,6 +117,29 @@ def get_data(tower, re, length):
     return (z_mesh,x_abs_avgs,y_abs_avgs,z_abs_avgs,dpdx_avg)
 
 
+
+def get_data_spacing(spacing, re):
+    '''Return averaged data from file using naming scheme for spacing runs.
+
+    Arguments:
+        spacing: 1, 2, 4, or 8 for 1/1, 1/2, 1/4, and 1/8 respectively
+            (8 looks for original data, 1 tower, length 10/64)
+        re: Reynolds number
+    '''
+
+    if spacing != 1 and spacing != 8:
+        filename = 'MacrophyteAvgs/viz_IB3d_1tower_Re{}_1_{}_spacing_avgs.txt'.format(re,spacing)
+    elif spacing == 1:
+        filename = 'MacrophyteAvgs/viz_IB3d_1tower_Re{}_1_spacing_avgs.txt'.format(re)
+    else:
+        filename = 'macrophyteAvgs/viz_IB3d_1tower_Re{}_len10_avgs.txt'.format(re)
+    z_mesh,x_abs_avgs,y_abs_avgs,z_abs_avgs = np.loadtxt(filename)
+    with open(filename[:-8]+'dpdx.txt') as fobj:
+        dpdx_avg = float(fobj.readline())
+    return (z_mesh,x_abs_avgs,y_abs_avgs,z_abs_avgs,dpdx_avg)
+
+
+
 def compare_heights(tower_num, re, length_list):
     '''Create a plot comparing averaged data across different tower heights.
 
@@ -131,18 +154,17 @@ def compare_heights(tower_num, re, length_list):
         data_list.append(get_data(tower_num, re, height))
 
     # plot setup
-    f, axarr = plt.subplots(3, sharex=True)
-    axarr[0].hold(True)
+    f, axarr = plt.subplots(3, sharex=True, figsize=(9,5.5))
     axarr[0].set_title(
         'Planar avgs. for fluid velocity around {} tower at Re {}.'.format(tower_num,re))
-    axarr[0].set_ylabel('Avg. velocity in\n direction of flow (X)')
+    axarr[0].set_ylabel('Avg. velocity in\n direction of flow, X(z)')
     axarr[0].set_xlim(data_list[0][0][0],data_list[0][0][-1])
     axarr[0].set_ylim(0,0.01)
-    axarr[1].hold(True)
-    axarr[1].set_ylabel('Avg. Y/X velocity')
+    axarr[1].set_ylabel(r'$\frac{\mathrm{Avg.} Y(z)\ \mathrm{velocity}}{\mathrm{Avg.} X(z)\ \mathrm{velocity}}$',
+        fontsize=14)
     axarr[1].set_xlim(data_list[0][0][0],data_list[0][0][-1])
-    axarr[2].hold(True)
-    axarr[2].set_ylabel('Avg. Z/X velocity')
+    axarr[2].set_ylabel(r'$\frac{\mathrm{Avg.} Z(z)\ \mathrm{velocity}}{\mathrm{Avg.} X(z)\ \mathrm{velocity}}$',
+        fontsize=14)
     axarr[2].set_xlim(data_list[0][0][0],data_list[0][0][-1])
     axarr[2].set_xlabel('Z intercept of plane')
 
@@ -152,9 +174,11 @@ def compare_heights(tower_num, re, length_list):
     for n,height in enumerate(length_list):
         for ii in range(3):
             if ii == 0:
+                # X direction
                 axarr[ii].plot(data_list[n][0],data_list[n][1],
                     label='Tower height: {}/64'.format(height),c=cmap(color_list[n]))
             else:
+                # normalize Y and Z direction
                 this_data = np.ma.array(data_list[n][ii+1]/data_list[n][1])
                 masked_data = np.ma.masked_where(data_list[n][ii+1] < 1e-10, this_data)
                 axarr[ii].plot(data_list[n][0],this_data,
@@ -169,8 +193,65 @@ def compare_heights(tower_num, re, length_list):
     plt.show()
 
 
-def compare_heights_X(tower_list=[1,4,16],re_list=[0.2,1],length_list=[10]):
-    '''Different plot for each tower length'''
+
+def compare_re(tower_num, re_list, length):
+    '''Create a plot comparing averaged data across different Re numbers.
+
+    Arguments:
+        tower_num: number of towers (int)
+        re: list of Reynolds numbers to compare across (ints)
+        length: tower height (int)
+    '''
+
+    data_list = []
+    for re in re_list:
+        data_list.append(get_data(tower_num, re, length))
+
+    # plot setup
+    f, axarr = plt.subplots(3, sharex=True, figsize=(7.5,5.5))
+    axarr[0].set_title(
+        'Avg. {} tower fluid velocity by Re. Tower height: {}/64'.format(tower_num,length))
+    axarr[0].set_ylabel('Avg. velocity in\n direction of flow, X(z)')
+    axarr[0].set_xlim(data_list[0][0][0],data_list[0][0][-1])
+    axarr[1].set_ylabel(r'$\frac{\mathrm{Avg.} Y(z)\ \mathrm{velocity}}{\mathrm{Avg.} X(z)\ \mathrm{velocity}}$',
+        fontsize=14)
+    axarr[1].set_xlim(data_list[0][0][0],data_list[0][0][-1])
+    axarr[2].set_ylabel(r'$\frac{\mathrm{Avg.} Z(z)\ \mathrm{velocity}}{\mathrm{Avg.} X(z)\ \mathrm{velocity}}$',
+        fontsize=14)
+    axarr[2].set_xlim(data_list[0][0][0],data_list[0][0][-1])
+    axarr[2].set_xlabel('Z intercept of plane')
+
+    # color setup
+    color_list = np.linspace(0.85,0.05,len(re_list))
+    cmap = cm.get_cmap('viridis')
+
+    for n,re in enumerate(re_list):
+        for ii in range(3):
+            if ii == 0:
+                # X direction
+                axarr[ii].plot(data_list[n][0],data_list[n][ii+1],
+                    label='Re = {}'.format(re),c=cmap(color_list[n]))
+            else:
+                # normalize Y and Z direction
+                this_data = np.ma.array(data_list[n][ii+1]/data_list[n][1])
+                masked_data = np.ma.masked_where(data_list[n][ii+1] < 1e-10, this_data)
+                axarr[ii].plot(data_list[n][0],this_data,
+                    label='Re = {}'.format(re),c=cmap(color_list[n]))
+    for ii in range(3):
+        # plot a vertical line at tower height
+        axarr[ii].axvline(x=length/64 - 0.5,color='k',ls='--')
+        if ii > 0:
+            leg = axarr[ii].legend(loc="upper right",ncol=2,fontsize=11)
+        else:
+            leg = axarr[ii].legend(loc="lower right",ncol=2,fontsize=11)
+        leg.get_frame().set_alpha(0.65)
+    plt.tight_layout()
+    plt.show()
+    
+
+
+def compare_all_Xdir(tower_list=[1,4,16],re_list=[0.2,1],length_list=[10]):
+    '''Different plot for each tower length. Plots X-direction velocity only.'''
 
     plt.figure()
     N = len(re_list)*len(tower_list)
@@ -206,50 +287,6 @@ def compare_heights_X(tower_list=[1,4,16],re_list=[0.2,1],length_list=[10]):
 
     plt.show()
 
-
-
-def compare_re(tower_num, re_list, length):
-    '''Create a plot comparing averaged data across different Re numbers.
-
-    Arguments:
-        tower_num: number of towers (int)
-        re: list of Reynolds numbers to compare across (ints)
-        length: tower height (int)
-    '''
-
-    data_list = []
-    for re in re_list:
-        data_list.append(get_data(tower_num, re, length))
-
-    # plot setup
-    f, axarr = plt.subplots(3, sharex=True)
-    axarr[0].set_title(
-        'Avg. {} tower fluid velocity by Re. Tower height: {}/64'.format(tower_num,length))
-    axarr[0].set_ylabel('Avg. X abs val.')
-    axarr[0].set_xlim(data_list[0][0][0],data_list[0][0][-1])
-    axarr[1].set_ylabel('Avg. Y abs val.')
-    axarr[1].set_xlim(data_list[0][0][0],data_list[0][0][-1])
-    axarr[2].set_ylabel('Avg. Z abs val.')
-    axarr[2].set_xlim(data_list[0][0][0],data_list[0][0][-1])
-    axarr[2].set_xlabel('Z intercept of plane')
-
-    # color setup
-    color_list = np.linspace(0.85,0.05,len(re_list))
-    cmap = cm.get_cmap('viridis')
-
-    for n,re in enumerate(re_list):
-        for ii in range(3):
-            axarr[ii].plot(data_list[n][0],data_list[n][ii+1],
-                label='Re = {}'.format(re),c=cmap(color_list[n]))
-    for ii in range(3):
-        # plot tower height
-        axarr[ii].axvline(x=length/64 - 0.5,color='k',ls='--')
-        if ii > 0:
-            leg = axarr[ii].legend(loc="upper right",ncol=2,fontsize=11)
-        else:
-            leg = axarr[ii].legend(loc="upper left",ncol=2,fontsize=11)
-        leg.get_frame().set_alpha(0.65)
-    plt.show()
 
 
 def fit_model(tower_num,re, length):
