@@ -157,13 +157,13 @@ def compare_heights(tower_num, re, length_list):
     f, axarr = plt.subplots(3, sharex=True, figsize=(9,5.5))
     axarr[0].set_title(
         'Planar avgs. for fluid velocity around {} tower at Re {}.'.format(tower_num,re))
-    axarr[0].set_ylabel('Avg. velocity in\n direction of flow, X(z)')
+    axarr[0].set_ylabel('Avg. fluid speed in\n direction of flow, X(z)')
     axarr[0].set_xlim(data_list[0][0][0],data_list[0][0][-1])
     axarr[0].set_ylim(0,0.01)
-    axarr[1].set_ylabel(r'$\frac{\mathrm{Avg.} Y(z)\ \mathrm{velocity}}{\mathrm{Avg.} X(z)\ \mathrm{velocity}}$',
+    axarr[1].set_ylabel(r'$\frac{\mathrm{Avg.} Y\ \mathrm{flow\ speed}}{\mathrm{Avg.} X\ \mathrm{flow\ speed}}$',
         fontsize=14)
     axarr[1].set_xlim(data_list[0][0][0],data_list[0][0][-1])
-    axarr[2].set_ylabel(r'$\frac{\mathrm{Avg.} Z(z)\ \mathrm{velocity}}{\mathrm{Avg.} X(z)\ \mathrm{velocity}}$',
+    axarr[2].set_ylabel(r'$\frac{\mathrm{Avg.} Z\ \mathrm{flow\ speed}}{\mathrm{Avg.} X\ \mathrm{flow\ speed}}$',
         fontsize=14)
     axarr[2].set_xlim(data_list[0][0][0],data_list[0][0][-1])
     axarr[2].set_xlabel('Z intercept of plane')
@@ -187,8 +187,12 @@ def compare_heights(tower_num, re, length_list):
             top = height/64 - 0.5
             axarr[ii].axvline(x=top,color=cmap(color_list[n]),ls='--')
     for ii in range(3):
+        # print legend
         leg = axarr[ii].legend(loc="upper right",fontsize=11)
         leg.get_frame().set_alpha(0.65)
+    xlabels_float = axarr[2].get_xticks().tolist()
+    xlabels_float -= data_list[0][0][0]
+    axarr[2].set_xticklabels([str(item) for item in xlabels_float])
     plt.tight_layout()
     plt.show()
 
@@ -210,13 +214,13 @@ def compare_re(tower_num, re_list, length):
     # plot setup
     f, axarr = plt.subplots(3, sharex=True, figsize=(7.5,5.5))
     axarr[0].set_title(
-        'Avg. {} tower fluid velocity by Re. Tower height: {}/64'.format(tower_num,length))
-    axarr[0].set_ylabel('Avg. velocity in\n direction of flow, X(z)')
+        'Planar avgs. for {} tower fluid velocity by Re. Tower height: {}/64'.format(tower_num,length))
+    axarr[0].set_ylabel('Avg. fluid speed in\n direction of flow, X(z)')
     axarr[0].set_xlim(data_list[0][0][0],data_list[0][0][-1])
-    axarr[1].set_ylabel(r'$\frac{\mathrm{Avg.} Y(z)\ \mathrm{velocity}}{\mathrm{Avg.} X(z)\ \mathrm{velocity}}$',
+    axarr[1].set_ylabel(r'$\frac{\mathrm{Avg.} Y\ \mathrm{flow\ speed}}{\mathrm{Avg.} X\ \mathrm{flow\ speed}}$',
         fontsize=14)
     axarr[1].set_xlim(data_list[0][0][0],data_list[0][0][-1])
-    axarr[2].set_ylabel(r'$\frac{\mathrm{Avg.} Z(z)\ \mathrm{velocity}}{\mathrm{Avg.} X(z)\ \mathrm{velocity}}$',
+    axarr[2].set_ylabel(r'$\frac{\mathrm{Avg.} Z\ \mathrm{flow\ speed}}{\mathrm{Avg.} X\ \mathrm{flow\ speed}}$',
         fontsize=14)
     axarr[2].set_xlim(data_list[0][0][0],data_list[0][0][-1])
     axarr[2].set_xlabel('Z intercept of plane')
@@ -240,11 +244,80 @@ def compare_re(tower_num, re_list, length):
     for ii in range(3):
         # plot a vertical line at tower height
         axarr[ii].axvline(x=length/64 - 0.5,color='k',ls='--')
+        # label it
+        axarr[ii].text(length/64+0.035, 0.78, 'top of\ncylinder',
+                       transform=axarr[ii].transAxes)
+        # print legend
         if ii > 0:
             leg = axarr[ii].legend(loc="upper right",ncol=2,fontsize=11)
         else:
             leg = axarr[ii].legend(loc="lower right",ncol=2,fontsize=11)
         leg.get_frame().set_alpha(0.65)
+    xlabels_float = axarr[2].get_xticks().tolist()
+    xlabels_float -= data_list[0][0][0]
+    axarr[2].set_xticklabels([str(item) for item in xlabels_float])
+    plt.tight_layout()
+    plt.show()
+
+
+
+def compare_towernum(tower_list, re):
+    '''Create a plot comparing different numbers of towers. Tower length = 10/64
+    
+    Arguments:
+        tower_list: list of tower numbers (ints)
+        re: Reynolds number'''
+
+    data_list = []
+    for tower_num in tower_list:
+        data_list.append(get_data(tower_num, re, 10))
+
+    # plot setup
+    f, axarr = plt.subplots(3, sharex=True, figsize=(7.5,5.5))
+    axarr[0].set_title(
+        'Planar avgs. for fluid velocity by array size at Re {}.'.format(re))
+    axarr[0].set_ylabel('Avg. fluid speed in\n direction of flow, X(z)')
+    axarr[0].set_xlim(data_list[0][0][0],data_list[0][0][-1])
+    axarr[0].set_ylim(0,0.01)
+    axarr[1].set_ylabel(r'$\frac{\mathrm{Avg.} Y\ \mathrm{flow\ speed}}{\mathrm{Avg.} X\ \mathrm{flow\ speed}}$',
+        fontsize=14)
+    axarr[1].set_xlim(data_list[0][0][0],data_list[0][0][-1])
+    axarr[2].set_ylabel(r'$\frac{\mathrm{Avg.} Z\ \mathrm{flow\ speed}}{\mathrm{Avg.} X\ \mathrm{flow\ speed}}$',
+        fontsize=14)
+    axarr[2].set_xlim(data_list[0][0][0],data_list[0][0][-1])
+    axarr[2].set_xlabel('Z intercept of plane')
+
+    # color setup
+    color_list = np.linspace(0.85,0.05,len(tower_list))
+    cmap = cm.get_cmap('viridis')
+
+    for n,num in enumerate(tower_list):
+        for ii in range(3):
+            if ii == 0:
+                # X direction
+                axarr[ii].plot(data_list[n][0],data_list[n][ii+1],
+                    label='{} tower(s)'.format(num),c=cmap(color_list[n]))
+            else:
+                # normalize Y and Z direction
+                this_data = np.ma.array(data_list[n][ii+1]/data_list[n][1])
+                masked_data = np.ma.masked_where(data_list[n][ii+1] < 1e-10, this_data)
+                axarr[ii].plot(data_list[n][0],this_data,
+                    label='{} tower(s)'.format(num),c=cmap(color_list[n]))
+    for ii in range(3):
+        # plot a vertical line at tower height
+        axarr[ii].axvline(x=10/64 - 0.5,color='k',ls='--')
+        # label it
+        axarr[ii].text(10/64+0.035, 0.78, 'top of\ncylinder',
+                       transform=axarr[ii].transAxes)
+        # print legend
+        if ii > 0:
+            leg = axarr[ii].legend(loc="upper right",ncol=2,fontsize=11)
+        else:
+            leg = axarr[ii].legend(loc="upper right",ncol=2,fontsize=11)
+        leg.get_frame().set_alpha(0.65)
+    xlabels_float = axarr[2].get_xticks().tolist()
+    xlabels_float -= data_list[0][0][0]
+    axarr[2].set_xticklabels([str(item) for item in xlabels_float])
     plt.tight_layout()
     plt.show()
     
