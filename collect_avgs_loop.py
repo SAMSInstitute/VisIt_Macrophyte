@@ -22,14 +22,14 @@ z_step = 0.005
 def main():
     
     # loop over naming schemes
-    for ll in ['02', '1']:
+    for ll in ['_2', '_4','']:
         
         path_to_dumps = \
-            r"MacrophyteData\1-tower-Re{}-1_4_spacing\viz_IB3d\dumps.visit".format(ll)
+            r"MacrophyteData\1-tower-Re10-1{}_spacing\viz_IB3d\dumps.visit".format(ll)
             # r"MacrophyteData\viz_IB3d_16towers_Re{}_len10\dumps.visit".format(ll)
         assert os.path.isfile(path_to_dumps)
         out_file = \
-            r"MacrophyteAvgs\viz_IB3d_1tower_Re{}_1_4_spacing_avgs.txt".format(ll)
+            r"MacrophyteAvgs\viz_IB3d_1tower_Re10_1{}_spacing_avgs.txt".format(ll)
             # r"MacrophyteAvgs\viz_IB3d_16towers_Re{}_len10_avgs.txt".format(ll)
         
         # get averages from data
