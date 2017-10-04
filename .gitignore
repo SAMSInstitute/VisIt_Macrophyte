@@ -6,3 +6,6 @@ _pycache_/
 
 # IBAMR data
 MacrophyteData/
+
+# VS Code
+.vscode/

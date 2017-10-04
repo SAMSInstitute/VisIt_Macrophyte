@@ -132,7 +132,7 @@ def get_data_spacing(spacing, re):
     elif spacing == 1:
         filename = 'MacrophyteAvgs/viz_IB3d_1tower_Re{}_1_spacing_avgs.txt'.format(re)
     else:
-        filename = 'macrophyteAvgs/viz_IB3d_1tower_Re{}_len10_avgs.txt'.format(re)
+        filename = 'MacrophyteAvgs/viz_IB3d_1tower_Re{}_len10_avgs.txt'.format(re)
     z_mesh,x_abs_avgs,y_abs_avgs,z_abs_avgs = np.loadtxt(filename)
     with open(filename[:-8]+'dpdx.txt') as fobj:
         dpdx_avg = float(fobj.readline())
@@ -157,7 +157,7 @@ def compare_heights(tower_num, re, length_list):
     f, axarr = plt.subplots(3, sharex=True, figsize=(9,5.5))
     axarr[0].set_title(
         'Planar avgs. for fluid velocity around {} tower at Re {}.'.format(tower_num,re))
-    axarr[0].set_ylabel('Avg. fluid speed in\n direction of flow, X(z)')
+    axarr[0].set_ylabel('Avg. normalized vel\n in dir of flow, X(z)')
     axarr[0].set_xlim(data_list[0][0][0],data_list[0][0][-1])
     axarr[0].set_ylim(0,0.01)
     axarr[1].set_ylabel(r'$\frac{\mathrm{Avg.} Y\ \mathrm{flow\ speed}}{\mathrm{Avg.} X\ \mathrm{flow\ speed}}$',
@@ -166,7 +166,7 @@ def compare_heights(tower_num, re, length_list):
     axarr[2].set_ylabel(r'$\frac{\mathrm{Avg.} Z\ \mathrm{flow\ speed}}{\mathrm{Avg.} X\ \mathrm{flow\ speed}}$',
         fontsize=14)
     axarr[2].set_xlim(data_list[0][0][0],data_list[0][0][-1])
-    axarr[2].set_xlabel('Z intercept of plane')
+    axarr[2].set_xlabel('Z')
 
     # color setup
     color_list = np.linspace(0.85,0.05,len(length_list))
@@ -176,13 +176,13 @@ def compare_heights(tower_num, re, length_list):
             if ii == 0:
                 # X direction
                 axarr[ii].plot(data_list[n][0],data_list[n][1],
-                    label='Tower height: {}/64'.format(height),c=cmap(color_list[n]))
+                    label='Tower H/D: {}'.format(height//2),c=cmap(color_list[n]))
             else:
                 # normalize Y and Z direction and mask where X < 0.001
                 this_data = np.ma.array(data_list[n][ii+1]/data_list[n][1])
                 masked_data = np.ma.masked_where(data_list[n][1] < 0.00001, this_data)
                 axarr[ii].plot(data_list[n][0], masked_data,
-                    label='Tower height: {}/64'.format(height),c=cmap(color_list[n]))
+                    label='Tower H/D: {}'.format(height//2),c=cmap(color_list[n]))
                 # plot lower X vel with dotted line in the same color
                 axarr[ii].plot(data_list[n][0],
                                np.ma.masked_where(~masked_data.mask, this_data),
@@ -201,6 +201,10 @@ def compare_heights(tower_num, re, length_list):
     xlabels_float = axarr[2].get_xticks().tolist()
     xlabels_float -= data_list[0][0][0]
     axarr[2].set_xticklabels([str(item) for item in xlabels_float])
+    # normalize y-axis in first plot
+    ylabels_float = axarr[0].get_yticks()
+    ylabels_float /= 0.1
+    axarr[0].set_yticklabels([str(item) for item in ylabels_float])
     plt.tight_layout()
     plt.show()
 
@@ -211,7 +215,7 @@ def compare_re(tower_num, re_list, length):
 
     Arguments:
         tower_num: number of towers (int)
-        re: list of Reynolds numbers to compare across (ints)
+        re: list of Reynolds numbers to compare across
         length: tower height (int)
     '''
 
@@ -222,8 +226,8 @@ def compare_re(tower_num, re_list, length):
     # plot setup
     f, axarr = plt.subplots(3, sharex=True, figsize=(7.5,5.5))
     axarr[0].set_title(
-        'Planar avgs. for {} tower fluid velocity by Re. Tower height: {}/64'.format(tower_num,length))
-    axarr[0].set_ylabel('Avg. fluid speed in\n direction of flow, X(z)')
+        'Planar avgs. for {} tower fluid velocity by Re. Tower H/D: {}'.format(tower_num,length//2))
+    axarr[0].set_ylabel('Avg. normalized vel\n in dir of flow, X(z)')
     axarr[0].set_xlim(data_list[0][0][0],data_list[0][0][-1])
     axarr[1].set_ylabel(r'$\frac{\mathrm{Avg.} Y\ \mathrm{flow\ speed}}{\mathrm{Avg.} X\ \mathrm{flow\ speed}}$',
         fontsize=14)
@@ -231,7 +235,7 @@ def compare_re(tower_num, re_list, length):
     axarr[2].set_ylabel(r'$\frac{\mathrm{Avg.} Z\ \mathrm{flow\ speed}}{\mathrm{Avg.} X\ \mathrm{flow\ speed}}$',
         fontsize=14)
     axarr[2].set_xlim(data_list[0][0][0],data_list[0][0][-1])
-    axarr[2].set_xlabel('Z intercept of plane')
+    axarr[2].set_xlabel('Z')
 
     # color setup
     color_list = np.linspace(0.85,0.05,len(re_list))
@@ -268,6 +272,10 @@ def compare_re(tower_num, re_list, length):
     xlabels_float = axarr[2].get_xticks().tolist()
     xlabels_float -= data_list[0][0][0]
     axarr[2].set_xticklabels([str(item) for item in xlabels_float])
+    # normalize y-axis in first plot
+    ylabels_float = axarr[0].get_yticks()
+    ylabels_float /= 0.1
+    axarr[0].set_yticklabels([str(item) for item in ylabels_float])
     plt.tight_layout()
     plt.show()
 
@@ -297,7 +305,7 @@ def compare_towernum(tower_list, re):
     axarr[2].set_ylabel(r'$\frac{\mathrm{Avg.} Z\ \mathrm{flow\ speed}}{\mathrm{Avg.} X\ \mathrm{flow\ speed}}$',
         fontsize=14)
     axarr[2].set_xlim(data_list[0][0][0],data_list[0][0][-1])
-    axarr[2].set_xlabel('Z intercept of plane')
+    axarr[2].set_xlabel('Z')
 
     # color setup
     color_list = np.linspace(0.85,0.05,len(tower_list))
@@ -369,7 +377,7 @@ def compare_all_Xdir(tower_list=[1,4,16], re_list=[0.2,1], length_list=[10]):
         axarr[2].set_ylabel('Average fluid velocity in direction of flow',fontsize=12)
     else:
         axarr[0].set_ylabel('Average fluid velocity in direction of flow',fontsize=12)
-    axarr[-1].set_xlabel('Z intercept of plane')
+    axarr[-1].set_xlabel('Z')
 
     plt.show()
 
@@ -390,8 +398,8 @@ def compare_spacing(spacing_list, re):
     # plot setup
     f, axarr = plt.subplots(3, sharex=True, figsize=(9,5.5))
     axarr[0].set_title(
-        'Planar avgs. for tower fluid velocity by spacing. Re = {}, Tower height = 10/64'.format(re))
-    axarr[0].set_ylabel('Avg. fluid speed in\n direction of flow, X(z)')
+        'Planar avgs. for tower fluid velocity by spacing. Re = {}, Tower H/D = 5'.format(re))
+    axarr[0].set_ylabel('Avg. normalized vel\n in dir of flow, X(z)')
     axarr[0].set_xlim(data_list[0][0][0],data_list[0][0][-1])
     axarr[1].set_ylabel(r'$\frac{\mathrm{Avg.} Y\ \mathrm{flow\ speed}}{\mathrm{Avg.} X\ \mathrm{flow\ speed}}$',
         fontsize=14)
@@ -399,7 +407,7 @@ def compare_spacing(spacing_list, re):
     axarr[2].set_ylabel(r'$\frac{\mathrm{Avg.} Z\ \mathrm{flow\ speed}}{\mathrm{Avg.} X\ \mathrm{flow\ speed}}$',
         fontsize=14)
     axarr[2].set_xlim(data_list[0][0][0],data_list[0][0][-1])
-    axarr[2].set_xlabel('Z intercept of plane')
+    axarr[2].set_xlabel('Z')
 
     # color setup
     color_list = np.linspace(0.85,0.05,len(spacing_list))
@@ -410,13 +418,13 @@ def compare_spacing(spacing_list, re):
             if ii == 0:
                 # X direction
                 axarr[ii].plot(data_list[n][0],data_list[n][ii+1],
-                    label='Spacing = 1/{}'.format(spacing),c=cmap(color_list[n]))
+                    label='G/D = {}'.format(32//spacing),c=cmap(color_list[n]))
             else:
                 # normalize Y and Z direction
                 this_data = np.ma.array(data_list[n][ii+1]/data_list[n][1])
                 masked_data = np.ma.masked_where(data_list[n][ii+1] < 1e-10, this_data)
                 axarr[ii].plot(data_list[n][0],this_data,
-                    label='Spacing = 1/{}'.format(spacing),c=cmap(color_list[n]))
+                    label='G/D = {}'.format(32//spacing),c=cmap(color_list[n]))
     for ii in range(3):
         # plot a vertical line at tower height
         axarr[ii].axvline(x=10/64 - 0.5,color='k',ls='--')
@@ -433,6 +441,10 @@ def compare_spacing(spacing_list, re):
     xlabels_float = axarr[2].get_xticks().tolist()
     xlabels_float -= data_list[0][0][0]
     axarr[2].set_xticklabels([str(item) for item in xlabels_float])
+    # normalize y-axis in first plot
+    ylabels_float = axarr[0].get_yticks()
+    ylabels_float /= 0.1
+    axarr[0].set_yticklabels([str(item) for item in ylabels_float])
     plt.tight_layout()
     plt.show()
 
@@ -566,11 +578,11 @@ def fit_model_loop(tower_num,re, length):
                     line.set_label('_no label')
                 clrdict = next(color_cycle)
                 ax.scatter(z_mesh,x_abs_avgs,
-                    label='{} tower, Re {}, len {}/64. '.format(tower,r,l)+\
+                    label='{} tower, Re {}, tower H/D {}. '.format(tower,r,l//2)+\
                     r'$\alpha$ = '+'{:.2f}'.format(result_obj.x[0]),
                     color=clrdict['color'],alpha=0.65)
                 axins.scatter(z_mesh,x_abs_avgs,
-                    label='{} tower, Re {}, len {}/64. '.format(tower,r,l)+\
+                    label='{} tower, Re {}, tower H/D {}. '.format(tower,r,l//2)+\
                     r'$\alpha$ = '+'{:.2f}'.format(result_obj.x[0]),
                     color=clrdict['color'],alpha=0.65)
                 # Plot where the top of the cylinder is
@@ -584,7 +596,7 @@ def fit_model_loop(tower_num,re, length):
                     tower,r,l,result_obj.x
                 ))
 
-    ax.set_xlabel('Z intercept of plane',fontsize='large')
+    ax.set_xlabel('Z',fontsize='large')
     ax.set_ylabel('Velocity in direction of flow',fontsize='large')
     ax.set_xlim([-0.5,0.425])
     ax.set_ylim(ymin=0)
@@ -671,11 +683,11 @@ def plot_brinkman_fit():
                     line.set_label('_no label')
                 clrdict = next(color_cycle)
                 ax.scatter(z_mesh,x_abs_avgs,
-                    label='{} tower, Re {}, len {}/64. '.format(tower,r,l)+\
+                    label='{} tower, Re {}, tower H/D {}. '.format(tower,r,l//2)+\
                     r'$\alpha$ = '+'{:.2f}'.format(result_obj.x[0]),
                     color=clrdict['color'],alpha=0.65)
                 axins.scatter(z_mesh,x_abs_avgs,
-                    label='{} tower, Re {}, len {}/64. '.format(tower,r,l)+\
+                    label='{} tower, Re {}, tower H/D {}. '.format(tower,r,l//2)+\
                     r'$\alpha$ = '+'{:.2f}'.format(result_obj.x[0]),
                     color=clrdict['color'],alpha=0.65)
                 # Plot where the top of the cylinder is
@@ -692,14 +704,17 @@ def plot_brinkman_fit():
                 ))
 
     # main plot properties
-    ax.set_xlabel('Z intercept of plane',fontsize='large')
-    ax.set_ylabel('Velocity in direction of flow',fontsize='large')
+    ax.set_xlabel('Z',fontsize='large')
+    ax.set_ylabel('Normalized velocity in direction of flow',fontsize='large')
     # Shift x-axis so it begins at 0
     xlabels_float = ax.get_xticks().tolist()
     xlabels_float -= z_mesh[0]
     ax.set_xticklabels([str(item) for item in xlabels_float])
     ax.set_ylim(ymin=0)
-    #plt.ylim([0,0.008])
+    # normalize y-axis
+    ylabels_float = ax.get_yticks()
+    ylabels_float /= 0.1
+    ax.set_yticklabels([str(item) for item in ylabels_float])
     leg = ax.legend(loc='upper left',fontsize='medium')
     leg.get_frame().set_alpha(0.65)
 
