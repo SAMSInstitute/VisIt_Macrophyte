@@ -178,11 +178,15 @@ def compare_heights(tower_num, re, length_list):
                 axarr[ii].plot(data_list[n][0],data_list[n][1],
                     label='Tower height: {}/64'.format(height),c=cmap(color_list[n]))
             else:
-                # normalize Y and Z direction
+                # normalize Y and Z direction and mask where X < 0.001
                 this_data = np.ma.array(data_list[n][ii+1]/data_list[n][1])
-                masked_data = np.ma.masked_where(data_list[n][ii+1] < 1e-10, this_data)
-                axarr[ii].plot(data_list[n][0],this_data,
+                masked_data = np.ma.masked_where(data_list[n][1] < 0.00001, this_data)
+                axarr[ii].plot(data_list[n][0], masked_data,
                     label='Tower height: {}/64'.format(height),c=cmap(color_list[n]))
+                # plot lower X vel with dotted line in the same color
+                axarr[ii].plot(data_list[n][0],
+                               np.ma.masked_where(~masked_data.mask, this_data),
+                               ls=':', c=cmap(color_list[n]))
             # plot a vertical line at tower height
             top = height/64 - 0.5
             axarr[ii].axvline(x=top,color=cmap(color_list[n]),ls='--')
@@ -190,6 +194,10 @@ def compare_heights(tower_num, re, length_list):
         # print legend
         leg = axarr[ii].legend(loc="upper right",fontsize=11)
         leg.get_frame().set_alpha(0.65)
+    # label the first tower height vertical line in the first plot
+    axarr[0].text(length_list[0]/64-0.09, 0.78, 'top of each\ncylinder',
+                    transform=axarr[0].transAxes)
+    # Shift x-axis so it begins at 0
     xlabels_float = axarr[2].get_xticks().tolist()
     xlabels_float -= data_list[0][0][0]
     axarr[2].set_xticklabels([str(item) for item in xlabels_float])
@@ -241,6 +249,9 @@ def compare_re(tower_num, re_list, length):
                 masked_data = np.ma.masked_where(data_list[n][ii+1] < 1e-10, this_data)
                 axarr[ii].plot(data_list[n][0],this_data,
                     label='Re = {}'.format(re),c=cmap(color_list[n]))
+        print('re: {}'.format(re))
+        print('max_val: {}'.format(np.max(data_list[n][3]/data_list[n][1])))
+        print('height: {}'.format(data_list[n][0][np.argmax(data_list[n][3]/data_list[n][1])]-data_list[n][0][0]))
     for ii in range(3):
         # plot a vertical line at tower height
         axarr[ii].axvline(x=length/64 - 0.5,color='k',ls='--')
@@ -253,6 +264,7 @@ def compare_re(tower_num, re_list, length):
         else:
             leg = axarr[ii].legend(loc="lower right",ncol=2,fontsize=11)
         leg.get_frame().set_alpha(0.65)
+    # Shift x-axis so it begins at 0
     xlabels_float = axarr[2].get_xticks().tolist()
     xlabels_float -= data_list[0][0][0]
     axarr[2].set_xticklabels([str(item) for item in xlabels_float])
@@ -315,6 +327,7 @@ def compare_towernum(tower_list, re):
         else:
             leg = axarr[ii].legend(loc="upper right",ncol=2,fontsize=11)
         leg.get_frame().set_alpha(0.65)
+    # Shift x-axis so it begins at 0
     xlabels_float = axarr[2].get_xticks().tolist()
     xlabels_float -= data_list[0][0][0]
     axarr[2].set_xticklabels([str(item) for item in xlabels_float])
@@ -416,6 +429,7 @@ def compare_spacing(spacing_list, re):
         else:
             leg = axarr[ii].legend(loc="lower right",ncol=2,fontsize=11)
         leg.get_frame().set_alpha(0.65)
+    # Shift x-axis so it begins at 0
     xlabels_float = axarr[2].get_xticks().tolist()
     xlabels_float -= data_list[0][0][0]
     axarr[2].set_xticklabels([str(item) for item in xlabels_float])
@@ -586,10 +600,8 @@ def fit_model_loop(tower_num,re, length):
 
 
 
-def journal_figures():
-    '''Plot and save journal figures'''
-
-    '''Fit model for variable tower length'''
+def plot_brinkman_fit():
+    '''Plot fit with brinkman model over various tower lengths'''
     tower_num = 1 # one tower
     re = 1 # Re number
     length = [10,20,30,40] # lengths
@@ -610,15 +622,14 @@ def journal_figures():
     result_obj = []
     model = []
 
-    plt.figure()
+    plt.figure(figsize=(8,5.5))
     ax = plt.axes()
-    plt.hold(True)
     plt.title('Flow velocity: simulation data vs. optimal model',fontsize="x-large")
 
     # Get color cycler
     N = len(tower_num)*len(re)*len(length)
     cmap = plt.get_cmap('Set2')
-    ax.set_color_cycle([cmap(k) for k in np.linspace(0,1,N)])
+    ax.set_prop_cycle('color', [cmap(k) for k in np.linspace(0,1,N)])
     color_cycle = ax._get_lines.prop_cycler
 
     # zoomed view
@@ -639,7 +650,7 @@ def journal_figures():
                 b = L - a
 
                 # Solve nonlinear least squares, just fitting up to tower height
-                zind = np.argwhere(z_mesh>a-0.5)[0].flatten()
+                zind = int(np.argwhere(z_mesh>a-0.5)[0].flatten())
                 result_obj = least_squares(resid,1.,bounds=(0,np.inf),
                                     args=(a,b,v,dpdx_avg,mu,
                                     z_mesh[:zind],x_abs_avgs[:zind]))
@@ -669,27 +680,39 @@ def journal_figures():
                     color=clrdict['color'],alpha=0.65)
                 # Plot where the top of the cylinder is
                 zind = np.argwhere(z_mesh<=a-0.5)
-                ax.plot(z_mesh[zind[-1]],x_abs_avgs[zind[-1]],'*',
-                    color=clrdict['color'],mec=clrdict['color'],ms=16,mew=2)
-                axins.plot(z_mesh[zind[-1]],x_abs_avgs[zind[-1]],'*',
-                    color=clrdict['color'],mec=clrdict['color'],ms=16,mew=2)
+                ax.plot(z_mesh[zind[-1]],x_abs_avgs[zind[-1]],'x',
+                    color='k',#clrdict['color'],mec=clrdict['color'],
+                    ms=9,mew=2)
+                axins.plot(z_mesh[zind[-1]],x_abs_avgs[zind[-1]],'x',
+                    color='k',#clrdict['color'],mec=clrdict['color'],
+                    ms=9,mew=2)
                 # Print out optimal alpha values
-                print(r'{} towers, Re {}, len {}, $\alpha$ = {}'.format(
+                print('{} towers, Re {}, len {}, \u03B1 = {}'.format(
                     tower,r,l,result_obj.x
                 ))
 
+    # main plot properties
     ax.set_xlabel('Z intercept of plane',fontsize='large')
     ax.set_ylabel('Velocity in direction of flow',fontsize='large')
-    ax.set_xlim([-0.5,0.425])
+    # Shift x-axis so it begins at 0
+    xlabels_float = ax.get_xticks().tolist()
+    xlabels_float -= z_mesh[0]
+    ax.set_xticklabels([str(item) for item in xlabels_float])
     ax.set_ylim(ymin=0)
     #plt.ylim([0,0.008])
     leg = ax.legend(loc='upper left',fontsize='medium')
     leg.get_frame().set_alpha(0.65)
 
+    # insert properties
     axins.set_xlim(-0.5,0.15)
+    # Shift x-axis so it begins at 0
+    xlabels_float = axins.get_xticks().tolist()
+    xlabels_float -= z_mesh[0]
+    axins.set_xticklabels([str(item) for item in xlabels_float])
     axins.set_ylim(0,0.005)
     plt.yticks(visible=False)
     mark_inset(ax,axins,loc1=1,loc2=3,fc="none",ec="0.45")
+    plt.tight_layout()
     plt.show()
 
 
